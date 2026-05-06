@@ -117,7 +117,27 @@ export default function CodeCheckSA() {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  const handlePrint = () => window.print();
+  const handlePrint = () => {
+    if (!analysisData) return;
+    const fileName = uploadedFileName || 'تحليل';
+    const date = new Date(analysisData.timestamp || Date.now()).toLocaleString('ar-SA');
+    const findings = analysisData.findings || [];
+    const recommendations = analysisData.recommendations || [];
+    const colors = { pass: '#3F5235', fail: '#A4502A', warn: '#B8860B' };
+    const findingsHTML = findings.map((f) => `<div style="border:1px solid #ddd;border-right:3px solid ${colors[f.type] || '#888'};padding:12px;margin:8px 0;page-break-inside:avoid"><div style="font-weight:600;margin-bottom:4px">${f.title || ''}</div><div style="font-size:11px;color:#888;margin-bottom:6px">${f.article || ''}</div><div style="font-size:13px;margin-bottom:6px">${f.details || ''}</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px"><div><strong>الملاحظ:</strong> ${f.observed || '-'}</div><div><strong>المطلوب:</strong> ${f.required || '-'}</div></div></div>`).join('');
+    const html = `<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8"><title>تقرير ${fileName}</title><link href="https://fonts.googleapis.com/css2?family=Reem+Kufi:wght@600&family=Tajawal:wght@400;700&display=swap" rel="stylesheet"><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Tajawal',Arial,sans-serif;padding:2cm;color:#1A1A1A;line-height:1.6;direction:rtl}h1{font-family:'Reem Kufi',serif;font-size:22px;margin-bottom:6px}h3{font-size:13px;margin:20px 0 10px;letter-spacing:0.05em;color:#666}.header{border-bottom:2px solid #1A1A1A;padding-bottom:14px;margin-bottom:16px}.header .meta{font-size:11px;color:#666;margin-top:4px}.summary{background:#F4EFE6;border-right:3px solid #3F5235;padding:12px;margin:12px 0;font-size:13px}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0}.stat{border:1px solid #ddd;padding:12px;text-align:center}.stat .l{font-size:10px;color:#666}.stat .v{font-size:26px;font-weight:700;font-family:'Reem Kufi',serif}.recs{background:#F4EFE6;padding:12px;margin:12px 0}.recs li{list-style:none;padding:3px 0;font-size:12px;padding-right:14px;position:relative}.recs li::before{content:"←";position:absolute;right:0;color:#3F5235}.footer{margin-top:20px;padding-top:10px;border-top:1px solid #ddd;font-size:10px;color:#888;text-align:center}@media print{body{padding:1cm}}</style></head><body><div class="header"><h1>CodeCheck.SA — تقرير التحليل المعماري</h1><div class="meta">منصة الامتثال الذكي لكود البناء السعودي</div><div class="meta">تاريخ التحليل: ${date}</div><div class="meta">الملف: ${fileName}</div></div><h2 style="font-family:'Reem Kufi',serif;font-size:17px;margin-bottom:8px">${analysisData.planType || 'تحليل المخطط'}</h2>${analysisData.summary ? `<div class="summary"><strong>الملخص:</strong> ${analysisData.summary}</div>` : ''}<div class="stats"><div class="stat"><div class="l">معدل الامتثال</div><div class="v">%${analysisData.compliance_score ?? 0}</div></div><div class="stat"><div class="l">البنود المراجعة</div><div class="v">${analysisData.total_items ?? findings.length}</div></div><div class="stat"><div class="l">ملاحظات حرجة</div><div class="v" style="color:#A4502A">${analysisData.critical_count ?? 0}</div></div></div>${findings.length ? `<h3>الملاحظات التفصيلية</h3>${findingsHTML}` : ''}${recommendations.length ? `<h3>التوصيات</h3><div class="recs"><ul>${recommendations.map((r) => `<li>${r}</li>`).join('')}</ul></div>` : ''}${analysisData.limitations ? `<h3>حدود التحليل</h3><div style="font-size:11px;padding:10px;border:1px solid #ddd">${analysisData.limitations}</div>` : ''}<div class="footer">CodeCheck.SA © 2026</div></body></html>`;
+    const w = window.open('', '_blank', 'width=900,height=900');
+    if (!w) {
+      alert('يُرجى السماح بالنوافذ المنبثقة في إعدادات المتصفح');
+      return;
+    }
+    w.document.open();
+    w.document.write(html);
+    w.document.close();
+    setTimeout(() => {
+      try { w.print(); } catch (e) {}
+    }, 600);
+  };
 
   const sbcCodes = [
     { code: 'SBC-201', title: 'كود البناء العام', icon: Building2 },
@@ -153,22 +173,6 @@ export default function CodeCheckSA() {
           animation: scan 2s linear infinite;
         }
         @keyframes scan { 0% { transform: translateY(-100%); } 100% { transform: translateY(100%); } }
-
-        @media print {
-          body * { visibility: hidden !important; }
-          .print-area, .print-area * { visibility: visible !important; }
-          .print-area {
-            position: absolute !important;
-            inset: 0 !important;
-            background: white !important;
-            color: black !important;
-            padding: 1.5cm 1cm !important;
-            width: 100% !important;
-            box-shadow: none !important;
-            border: none !important;
-          }
-          .no-print-inside { display: none !important; }
-        }
       `}</style>
 
       <header className={`sticky top-0 z-50 transition-all ${scrolled ? 'bg-[#F4EFE6]/95 backdrop-blur-sm border-b border-[var(--line)]' : 'bg-transparent'}`}>
@@ -312,7 +316,7 @@ export default function CodeCheckSA() {
 
           {activeTab === 'upload' && (
             <div className="bg-white border border-[var(--line)] shadow-sm">
-              <div className="border-b border-[var(--line)] p-3 md:p-4 flex items-center gap-3 bg-[#F9F6EF] no-print-inside">
+              <div className="border-b border-[var(--line)] p-3 md:p-4 flex items-center gap-3 bg-[#F9F6EF]">
                 <div className="w-2 h-2 rounded-full bg-[#3F5235] animate-pulse"></div>
                 <span className="text-[10px] md:text-xs tracking-wider text-[var(--ink)]/60">PLAN ANALYZER — رؤية حاسوبية + RAG</span>
               </div>
@@ -355,7 +359,7 @@ export default function CodeCheckSA() {
                     <div className="relative mx-auto w-48 h-48 md:w-64 md:h-64 border border-[var(--line)] bg-[#F9F6EF] overflow-hidden mb-6">
                       <div className="absolute inset-4 border border-[#3F5235]/30">
                         <div className="absolute inset-2 grid grid-cols-3 gap-1 opacity-40">
-                          {[...Array(9)].map((_,i)=>(<div key={i} className="border border-[#3F5235]"></div>))}
+                          {[...Array(9)].map((_, i) => (<div key={i} className="border border-[#3F5235]"></div>))}
                         </div>
                       </div>
                       <div className="scan-line"></div>
@@ -384,23 +388,16 @@ export default function CodeCheckSA() {
                 )}
 
                 {uploadState === 'done' && analysisData && (
-                  <div className="fade-up print-area">
-                    <div className="hidden print:block mb-6 pb-4 border-b-2 border-black">
-                      <div className="text-2xl font-bold mb-1">CodeCheck.SA — تقرير التحليل المعماري</div>
-                      <div className="text-xs">منصة الامتثال الذكي لكود البناء السعودي</div>
-                      <div className="text-xs mt-2">تاريخ التحليل: {new Date(analysisData.timestamp).toLocaleString('ar-SA')}</div>
-                      <div className="text-xs">الملف: {uploadedFileName}</div>
-                    </div>
-
+                  <div className="fade-up">
                     <div className="flex flex-wrap items-center justify-between mb-6 md:mb-8 pb-4 md:pb-6 border-b border-[var(--line)] gap-3">
                       <div>
                         <div className="text-[10px] md:text-xs text-[var(--ink)]/50 mb-1">تقرير الامتثال — {analysisData.planType || 'مخطط'}</div>
                         <div className="display text-lg md:text-2xl">{uploadedFileName || 'تحليل المخطط'}</div>
                       </div>
-                      <div className="flex gap-2 no-print-inside">
+                      <div className="flex gap-2">
                         <button
                           onClick={handlePrint}
-                          className="flex items-center gap-2 bg-[#3F5235] text-[var(--paper)] px-3 md:px-4 py-2 text-[10px] md:text-xs tracking-wider hover:bg-[var(--ink)] transition"
+                          className="flex items-center gap-2 bg-[#3F5235] text-[var(--paper)] px-3 md:px-4 py-2 text-[10px] md:text-xs tracking-wider hover:bg-[var(--ink)] transition cursor-pointer"
                         >
                           <Printer className="w-3 h-3 md:w-4 md:h-4" /> طباعة التقرير
                         </button>
@@ -420,7 +417,7 @@ export default function CodeCheckSA() {
                     <div className="grid grid-cols-3 gap-px bg-[var(--line)] mb-6 md:mb-8 border border-[var(--line)]">
                       <div className="bg-white p-3 md:p-6">
                         <div className="text-[10px] md:text-xs text-[var(--ink)]/50 mb-1 md:mb-2">معدل الامتثال</div>
-                        <div className="display text-2xl md:text-4xl arabic-numerals">%{analysisData.compliance_score ?? '—'}</div>
+                        <div className="display text-2xl md:text-4xl arabic-numerals">%{analysisData.compliance_score ?? 0}</div>
                       </div>
                       <div className="bg-white p-3 md:p-6">
                         <div className="text-[10px] md:text-xs text-[var(--ink)]/50 mb-1 md:mb-2">البنود المراجعة</div>
@@ -487,10 +484,6 @@ export default function CodeCheckSA() {
                         <strong>حدود التحليل:</strong> {analysisData.limitations}
                       </div>
                     )}
-
-                    <div className="mt-4 text-[10px] md:text-xs text-[var(--ink)]/50 leading-relaxed bg-[#F9F6EF] p-3 md:p-4 border-r-2 border-[#3F5235]">
-                      <strong>إخلاء مسؤولية:</strong> هذا التقرير عرض استرشادي مولّد آلياً. يُنصح بمراجعة مكتب هندسي معتمد قبل تقديم المخطط رسمياً للجهات المختصة.
-                    </div>
                   </div>
                 )}
               </div>
