@@ -5,42 +5,39 @@ import Anthropic from '@anthropic-ai/sdk';
 import { NextRequest, NextResponse } from 'next/server';
 import knowledgeBase from '../../../data/sbc-knowledge.json';
 
-const client = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
+const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 const ANALYSIS_TOOL = {
   name: "submit_plan_analysis",
-  description: "إرسال نتيجة تحليل المخطط المعماري بصيغة هيكلية مضمونة",
+  description: "إرسال نتيجة تحليل المخطط المعماري بصيغة هيكلية",
   input_schema: {
     type: "object",
     properties: {
-      valid: { type: "boolean", description: "هل الصورة قابلة للتحليل كمخطط معماري" },
-      errorMessage: { type: "string", description: "في حالة valid=false، السبب بالعربية" },
-      planType: { type: "string", description: "نوع المخطط (مسقط، واجهة، قطاع، إلخ)" },
-      summary: { type: "string", description: "ملخص في 1-2 جملة بالعربية" },
-      compliance_score: { type: "number", description: "معدل الامتثال من 0 إلى 100" },
-      total_items: { type: "number", description: "إجمالي البنود المراجعة" },
-      critical_count: { type: "number", description: "عدد المخالفات الحرجة" },
+      valid: { type: "boolean" },
+      errorMessage: { type: "string" },
+      planType: { type: "string" },
+      summary: { type: "string" },
+      compliance_score: { type: "number" },
+      total_items: { type: "number" },
+      critical_count: { type: "number" },
       findings: {
         type: "array",
-        description: "قائمة الملاحظات التفصيلية",
         items: {
           type: "object",
           properties: {
             type: { type: "string", enum: ["pass", "fail", "warn"] },
             title: { type: "string" },
-            observed: { type: "string", description: "ما لوحظ في المخطط" },
-            required: { type: "string", description: "المطلوب حسب SBC" },
-            article: { type: "string", description: "المرجع مثل: SBC 201 - 1004.2" },
+            observed: { type: "string" },
+            required: { type: "string" },
+            article: { type: "string" },
             severity: { type: "string", enum: ["high", "medium", "low"] },
-            details: { type: "string", description: "شرح تفصيلي بالعربية" }
+            details: { type: "string" }
           },
           required: ["type", "title", "observed", "required", "article", "details"]
         }
       },
       recommendations: { type: "array", items: { type: "string" } },
-      limitations: { type: "string", description: "حدود التحليل بصراحة" }
+      limitations: { type: "string" }
     },
     required: ["valid", "summary", "findings"]
   }
@@ -48,18 +45,18 @@ const ANALYSIS_TOOL = {
 
 const SYSTEM_PROMPT = `أنت مهندس استشاري سعودي خبير في كود البناء السعودي SBC، تعمل ضمن منصة CodeCheck.SA.
 
-مهمتك: تحليل الصورة المرفوعة، استخراج العناصر المعمارية الظاهرة، ومقارنتها بمتطلبات SBC.
+مهمتك: تحليل الصورة، استخراج العناصر المعمارية، ومقارنتها بـ SBC.
 
 قواعد صارمة:
-1. حلل فقط ما تراه فعلياً في الصورة. لا تخترع عناصر أو قياسات.
-2. إذا كانت الصورة غير واضحة أو ليست مخططاً معمارياً، استخدم valid=false مع errorMessage يوضح السبب.
-3. استشهد فقط بمراجع SBC من قاعدة المعرفة المرفقة. لا تخترع أرقام مواد.
-4. كن صريحاً عن حدود التحليل في حقل limitations.
-5. قدّم تقييماً متوازناً ومحايداً.
-6. اللغة: عربية فصحى مهنية ودقيقة.
-7. استخدم دائماً أداة submit_plan_analysis لإرسال النتيجة.
+1. حلل فقط ما تراه فعلياً. لا تخترع.
+2. إذا الصورة غير واضحة أو ليست مخططاً، استخدم valid=false.
+3. استشهد فقط بمراجع SBC من قاعدة المعرفة.
+4. املأ كل الحقول: planType, compliance_score (0-100), total_items, critical_count, findings (3-8 ملاحظات على الأقل), recommendations, limitations.
+5. كن صريحاً ومحايداً.
+6. اللغة: عربية فصحى مهنية.
+7. استخدم دائماً أداة submit_plan_analysis.
 
-قاعدة المعرفة (المصدر الوحيد المسموح للاستشهاد):
+قاعدة المعرفة:
 ${JSON.stringify(knowledgeBase.entries, null, 2)}`;
 
 export async function POST(request: NextRequest) {
@@ -67,17 +64,14 @@ export async function POST(request: NextRequest) {
     if (!process.env.ANTHROPIC_API_KEY) {
       return NextResponse.json({ error: 'مفتاح API غير مكوّن' }, { status: 500 });
     }
-
     const body = await request.json();
     const { image, mediaType } = body;
-
     if (!image || !mediaType) {
-      return NextResponse.json({ error: 'يُرجى إرفاق صورة أو ملف المخطط' }, { status: 400 });
+      return NextResponse.json({ error: 'يُرجى إرفاق صورة أو ملف' }, { status: 400 });
     }
-
     const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'application/pdf'];
     if (!allowedTypes.includes(mediaType)) {
-      return NextResponse.json({ error: 'نوع الملف غير مدعوم. الصيغ: JPG, PNG, WebP, PDF' }, { status: 400 });
+      return NextResponse.json({ error: 'نوع الملف غير مدعوم' }, { status: 400 });
     }
 
     const contentBlock = mediaType === 'application/pdf'
@@ -95,25 +89,18 @@ export async function POST(request: NextRequest) {
           role: 'user',
           content: [
             contentBlock,
-            { type: 'text', text: 'حلل هذا المخطط أو الصورة واستخدم أداة submit_plan_analysis لإرسال النتيجة.' },
+            { type: 'text', text: 'حلل المخطط واملأ كل حقول الأداة بدقة.' },
           ],
         },
       ],
     });
 
     const toolUseBlock = response.content.find((b) => b.type === 'tool_use');
-
     if (!toolUseBlock || toolUseBlock.type !== 'tool_use') {
-      const textBlock = response.content.find((b) => b.type === 'text');
-      const fallbackText = textBlock && textBlock.type === 'text' ? textBlock.text : '';
-      return NextResponse.json(
-        { error: 'لم يتم استرجاع تحليل منظم. ' + fallbackText.slice(0, 200) },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: 'لم يتم استرجاع تحليل منظم' }, { status: 500 });
     }
 
-    const analysis = toolUseBlock.input;
-
+    const analysis: any = toolUseBlock.input;
     if (analysis.valid === false) {
       return NextResponse.json(
         { error: analysis.errorMessage || 'لم يتم التعرف على المخطط', valid: false },
@@ -121,15 +108,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return NextResponse.json({
-      ...analysis,
-      timestamp: new Date().toISOString(),
-    });
-  } catch (error) {
+    // حساب الإحصائيات تلقائياً إذا كانت ناقصة
+    const findings = analysis.findings || [];
+    if (analysis.total_items == null) analysis.total_items = findings.length;
+    if (analysis.critical_count == null) {
+      analysis.critical_count = findings.filter((f: any) => f.type === 'fail' || f.severity === 'high').length;
+    }
+    if (analysis.compliance_score == null) {
+      if (findings.length > 0) {
+        const pass = findings.filter((f: any) => f.type === 'pass').length;
+        const warn = findings.filter((f: any) => f.type === 'warn').length;
+        analysis.compliance_score = Math.round(((pass + warn * 0.5) / findings.length) * 100);
+      } else {
+        analysis.compliance_score = 0;
+      }
+    }
+
+    return NextResponse.json({ ...analysis, timestamp: new Date().toISOString() });
+  } catch (error: any) {
     console.error('Plan analysis error:', error);
-    return NextResponse.json(
-      { error: 'حدث خطأ أثناء التحليل: ' + (error.message || 'غير محدد') },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'حدث خطأ: ' + (error.message || 'غير محدد') }, { status: 500 });
   }
 }
