@@ -6,7 +6,7 @@ import { useState, useEffect, useRef } from 'react';
 import {
   Search, Upload, FileText, AlertTriangle, CheckCircle2, XCircle, ArrowLeft,
   BookOpen, Layers, Loader2, FileCheck2, ChevronLeft, Hash, Clock,
-  Printer, Send, Building2, Target, TrendingUp, Shield, Zap, Sparkles
+  Printer, Send, Building2, Target, TrendingUp, Shield, Zap, Sparkles, Info
 } from 'lucide-react';
 
 export default function CodeCheckSA() {
@@ -125,7 +125,7 @@ export default function CodeCheckSA() {
     const recommendations = analysisData.recommendations || [];
     const colors = { pass: '#3F5235', fail: '#A4502A', warn: '#B8860B' };
     const findingsHTML = findings.map((f) => `<div style="border:1px solid #ddd;border-right:3px solid ${colors[f.type] || '#888'};padding:12px;margin:8px 0;page-break-inside:avoid"><div style="font-weight:600;margin-bottom:4px">${f.title || ''}</div><div style="font-size:11px;color:#888;margin-bottom:6px">${f.article || ''}</div><div style="font-size:13px;margin-bottom:6px">${f.details || ''}</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px"><div><strong>الملاحظ:</strong> ${f.observed || '-'}</div><div><strong>المطلوب:</strong> ${f.required || '-'}</div></div></div>`).join('');
-    const html = `<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8"><title>تقرير ${fileName}</title><link href="https://fonts.googleapis.com/css2?family=Reem+Kufi:wght@600&family=Tajawal:wght@400;700&display=swap" rel="stylesheet"><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Tajawal',Arial,sans-serif;padding:2cm;color:#1A1A1A;line-height:1.6;direction:rtl}h1{font-family:'Reem Kufi',serif;font-size:22px;margin-bottom:6px}h3{font-size:13px;margin:20px 0 10px;letter-spacing:0.05em;color:#666}.header{border-bottom:2px solid #1A1A1A;padding-bottom:14px;margin-bottom:16px}.header .meta{font-size:11px;color:#666;margin-top:4px}.summary{background:#F4EFE6;border-right:3px solid #3F5235;padding:12px;margin:12px 0;font-size:13px}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0}.stat{border:1px solid #ddd;padding:12px;text-align:center}.stat .l{font-size:10px;color:#666}.stat .v{font-size:26px;font-weight:700;font-family:'Reem Kufi',serif}.recs{background:#F4EFE6;padding:12px;margin:12px 0}.recs li{list-style:none;padding:3px 0;font-size:12px;padding-right:14px;position:relative}.recs li::before{content:"←";position:absolute;right:0;color:#3F5235}.footer{margin-top:20px;padding-top:10px;border-top:1px solid #ddd;font-size:10px;color:#888;text-align:center}@media print{body{padding:1cm}}</style></head><body><div class="header"><h1>CodeCheck.SA — تقرير التحليل المعماري</h1><div class="meta">منصة الامتثال الذكي لكود البناء السعودي</div><div class="meta">تاريخ التحليل: ${date}</div><div class="meta">الملف: ${fileName}</div></div><h2 style="font-family:'Reem Kufi',serif;font-size:17px;margin-bottom:8px">${analysisData.planType || 'تحليل المخطط'}</h2>${analysisData.summary ? `<div class="summary"><strong>الملخص:</strong> ${analysisData.summary}</div>` : ''}<div class="stats"><div class="stat"><div class="l">معدل الامتثال</div><div class="v">%${analysisData.compliance_score ?? 0}</div></div><div class="stat"><div class="l">البنود المراجعة</div><div class="v">${analysisData.total_items ?? findings.length}</div></div><div class="stat"><div class="l">ملاحظات حرجة</div><div class="v" style="color:#A4502A">${analysisData.critical_count ?? 0}</div></div></div>${findings.length ? `<h3>الملاحظات التفصيلية</h3>${findingsHTML}` : ''}${recommendations.length ? `<h3>التوصيات</h3><div class="recs"><ul>${recommendations.map((r) => `<li>${r}</li>`).join('')}</ul></div>` : ''}${analysisData.limitations ? `<h3>حدود التحليل</h3><div style="font-size:11px;padding:10px;border:1px solid #ddd">${analysisData.limitations}</div>` : ''}<div class="footer">CodeCheck.SA © 2026</div></body></html>`;
+    const html = `<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8"><title>تقرير ${fileName}</title><link href="https://fonts.googleapis.com/css2?family=Reem+Kufi:wght@600&family=Tajawal:wght@400;700&display=swap" rel="stylesheet"><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Tajawal',Arial,sans-serif;padding:2cm;color:#1A1A1A;line-height:1.6;direction:rtl}h1{font-family:'Reem Kufi',serif;font-size:22px;margin-bottom:6px}h3{font-size:13px;margin:20px 0 10px;letter-spacing:0.05em;color:#666}.header{border-bottom:2px solid #1A1A1A;padding-bottom:14px;margin-bottom:16px}.header .meta{font-size:11px;color:#666;margin-top:4px}.summary{background:#F4EFE6;border-right:3px solid #3F5235;padding:12px;margin:12px 0;font-size:13px}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0}.stat{border:1px solid #ddd;padding:12px;text-align:center}.stat .l{font-size:10px;color:#666}.stat .v{font-size:26px;font-weight:700;font-family:'Reem Kufi',serif}.recs{background:#F4EFE6;padding:12px;margin:12px 0}.recs li{list-style:none;padding:3px 0;font-size:12px;padding-right:14px;position:relative}.recs li::before{content:"←";position:absolute;right:0;color:#3F5235}.footer{margin-top:20px;padding-top:10px;border-top:1px solid #ddd;font-size:10px;color:#888;text-align:center}@media print{body{padding:1cm}}</style></head><body><div class="header"><h1>CodeCheck.SA — تقرير التحليل المعماري</h1><div class="meta">منصة الامتثال الذكي لكود البناء السعودي</div><div class="meta">تاريخ التحليل: ${date}</div><div class="meta">الملف: ${fileName}</div></div><h2 style="font-family:'Reem Kufi',serif;font-size:17px;margin-bottom:8px">${analysisData.planType || 'تحليل المخطط'}</h2>${analysisData.summary ? `<div class="summary"><strong>الملخص:</strong> ${analysisData.summary}</div>` : ''}<div class="stats"><div class="stat"><div class="l">معدل الامتثال</div><div class="v">%${analysisData.compliance_score ?? 0}</div></div><div class="stat"><div class="l">البنود المراجعة</div><div class="v">${analysisData.total_items ?? findings.length}</div></div><div class="stat"><div class="l">ملاحظات حرجة</div><div class="v" style="color:#A4502A">${analysisData.critical_count ?? 0}</div></div></div>${findings.length ? `<h3>الملاحظات التفصيلية</h3>${findingsHTML}` : '<div style="padding:12px;background:#F4EFE6;border-right:3px solid #3F5235;font-size:13px;margin:12px 0">لم يُرجع التحليل ملاحظات تفصيلية لهذا المخطط.</div>'}${recommendations.length ? `<h3>التوصيات</h3><div class="recs"><ul>${recommendations.map((r) => `<li>${r}</li>`).join('')}</ul></div>` : ''}${analysisData.limitations ? `<h3>حدود التحليل</h3><div style="font-size:11px;padding:10px;border:1px solid #ddd">${analysisData.limitations}</div>` : ''}<div class="footer">CodeCheck.SA © 2026</div></body></html>`;
     const w = window.open('', '_blank', 'width=900,height=900');
     if (!w) {
       alert('يُرجى السماح بالنوافذ المنبثقة في إعدادات المتصفح');
@@ -134,9 +134,7 @@ export default function CodeCheckSA() {
     w.document.open();
     w.document.write(html);
     w.document.close();
-    setTimeout(() => {
-      try { w.print(); } catch (e) {}
-    }, 600);
+    setTimeout(() => { try { w.print(); } catch (e) {} }, 600);
   };
 
   const sbcCodes = [
@@ -428,6 +426,15 @@ export default function CodeCheckSA() {
                         <div className="display text-2xl md:text-4xl text-[#A4502A] arabic-numerals">{analysisData.critical_count ?? 0}</div>
                       </div>
                     </div>
+
+                    {(!analysisData.findings || analysisData.findings.length === 0) && (
+                      <div className="mb-6 p-5 md:p-6 bg-[#F9F6EF] border border-[var(--line)] border-r-2 border-r-[#3F5235] flex items-start gap-3">
+                        <Info className="w-5 h-5 text-[#3F5235] flex-shrink-0 mt-0.5" />
+                        <div className="text-xs md:text-sm text-[var(--ink)]/75 leading-relaxed">
+                          لم يُرجع التحليل ملاحظات تفصيلية لهذا المخطط. قد يعود ذلك إلى وضوح المخطط، أو محدودية العناصر القابلة للفحص، أو الحاجة إلى مقياس واضح. يُرجى مراجعة الملخص وحدود التحليل أدناه، أو تجربة مخطط بدقة أعلى.
+                        </div>
+                      </div>
+                    )}
 
                     {analysisData.findings && analysisData.findings.length > 0 && (
                       <>
