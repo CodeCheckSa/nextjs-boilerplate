@@ -137,11 +137,15 @@ export default function CodeCheckSA() {
     setTimeout(() => { try { w.print(); } catch (e) {} }, 600);
   };
 
-  const sbcCodes = [
-    { code: 'SBC-201', title: 'كود البناء العام', icon: Building2 },
+    const sbcCodes = [
+    { code: 'MOMAH 2024', title: 'اشتراطات المباني السكنية', icon: Target },
+    { code: 'SBC-1101', title: 'المباني السكنية', icon: Building2 },
+    { code: 'SBC-1102', title: 'الصحي والميكانيكي والكهربائي', icon: FileText },
+    { code: 'SBC-602', title: 'ترشيد الطاقة', icon: Sparkles },
     { code: 'SBC-301', title: 'الأحمال والزلازل', icon: Layers },
     { code: 'SBC-801', title: 'الحماية من الحرائق', icon: Shield },
-    { code: 'SBC-1101', title: 'المباني السكنية', icon: Building2 },
+    { code: 'SBC-201', title: 'كود البناء العام', icon: BookOpen },
+    { code: 'SBC-401', title: 'الكهربائي', icon: Zap },
   ];
 
   return (
@@ -240,9 +244,9 @@ export default function CodeCheckSA() {
             <span>الأكواد المدمجة في المحرك</span>
           </div>
           <h2 className="display text-2xl md:text-4xl leading-tight mb-10 md:mb-12">
-            أربعة أكواد رئيسية،
+            ثمانية مراجع تنظيمية،
             <br />
-            مفهرسة آلياً بالكامل.
+            فهرسة في <span className="arabic-numerals">118</span> إدخالاً موثّقاً.
           </h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
             {sbcCodes.map((c, i) => {
