@@ -105,7 +105,7 @@ export async function POST(request: NextRequest) {
     try {
       response = await client.messages.create({
         model: 'claude-sonnet-4-6',
-        max_tokens: 4096,
+        max_tokens: 2048,
         system: SYSTEM_PROMPT,
         tools: [ANALYSIS_TOOL],
         tool_choice: { type: 'tool', name: 'submit_plan_analysis' },
