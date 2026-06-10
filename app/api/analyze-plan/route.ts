@@ -24,6 +24,7 @@ const ANALYSIS_TOOL = {
       critical_count: { type: "number" },
       findings: {
         type: "array",
+        minItems: 5,
         items: {
           type: "object",
           properties: {
