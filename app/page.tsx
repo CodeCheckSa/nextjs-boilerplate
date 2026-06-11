@@ -605,16 +605,16 @@ export default function CodeCheckSA() {
               </h2>
               <p className="text-sm md:text-base text-[var(--ink)]/70 leading-loose">
                 المنصة مصممة لتعمل كطبقة تدقيق آلي تتكامل مع منصة بلدي، نظام إتمام، ومنصة الدفاع المدني (سلامة)
-                دون الحاجة لاستبدال أي نظام قائم.
+                دون الحاجة لاستبدال أي نظام قائم. وتتوسع تدريجياً وفق خارطة طريق واضحة بعد البيئة التجريبية.
               </p>
             </div>
             <div className="space-y-px bg-[var(--line)]">
               {[
-                { name: 'منصة بلدي', role: 'استيراد بيانات الأرض والاشتراطات', status: 'API مقترح' },
-                { name: 'نظام إتمام', role: 'إصدار الرخصة بعد الموافقة', status: 'تكامل مرحلي' },
-                { name: 'سلامة — الدفاع المدني', role: 'مراجعة اشتراطات الحريق', status: 'تنسيق مطلوب' },
-                { name: 'كود البناء السعودي SBC', role: 'المرجعية الفنية الأساسية', status: 'مدمج بالكامل' },
-              ].map((item, i) => (
+  { name: 'منصة بلدي', role: 'استيراد بيانات الأرض والاشتراطات', status: 'هدف البيئة التجريبية' },
+  { name: 'نظام إتمام', role: 'إصدار الرخصة بعد الموافقة', status: 'هدف ما بعد التجربة' },
+  { name: 'سلامة — الدفاع المدني', role: 'مراجعة اشتراطات الحريق', status: 'تنسيق مستقبلي' },
+  { name: 'كود البناء السعودي SBC', role: 'المرجعية الفنية الأساسية', status: 'مدمج بالكامل' },
+].map((item, i) => (
                 <div key={i} className="bg-[#EBE5D6] p-4 md:p-5 flex items-center justify-between gap-3">
                   <div>
                     <div className="display text-sm md:text-base">{item.name}</div>
