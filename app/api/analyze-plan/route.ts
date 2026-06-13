@@ -169,9 +169,9 @@ export async function POST(request: Request) {
       },
     ];
 
-    let report: any = null;
+        let report: any = null;
 
-    for (let attempt = 0; attempt < 2; attempt++) {
+    for (let attempt = 0; attempt < 1; attempt++) {
       const resp = await anthropic.messages.create({
         model: MODEL,
         max_tokens: 2500,
