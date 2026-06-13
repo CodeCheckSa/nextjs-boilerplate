@@ -174,7 +174,7 @@ export async function POST(request: Request) {
     for (let attempt = 0; attempt < 1; attempt++) {
       const resp = await anthropic.messages.create({
         model: MODEL,
-        max_tokens: 2500,
+        max_tokens: 5000,
         system: systemPrompt,
         tools: [COMPLIANCE_TOOL],
         tool_choice: { type: 'tool', name: 'submit_compliance_report' },
