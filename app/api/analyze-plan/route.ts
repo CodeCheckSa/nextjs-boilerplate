@@ -68,37 +68,38 @@ const EXTRACTION_PROMPT = `أنت محلل رؤية حاسوبية متخصص ف
 4. اكتب الأسماء بالعربية كما تظهر في المخطط.`;
 const COMPLIANCE_TOOL = {
   name: 'submit_compliance_report',
-  description: 'إرسال تقرير الامتثال النهائي المبني على العناصر المستخرجة وقاعدة المعرفة التنظيمية.',
+  description: 'إرسال تقرير الامتثال النهائي. المصفوفة findings إلزامية ويجب أن تحوي 6 إلى 10 ملاحظات — التقرير بدونها مرفوض.',
   input_schema: {
     type: 'object' as const,
     properties: {
-      planType: { type: 'string', description: 'نوع المخطط' },
-      summary: { type: 'string', description: 'ملخص عربي مهني للتحليل (3-5 جمل)' },
       findings: {
         type: 'array',
         minItems: 5,
-        description: 'ملاحظات التدقيق التفصيلية. إلزامي: ملاحظة لكل عنصر معماري مستخرج قابل للتقييم.',
+        maxItems: 12,
+        description: 'ملاحظات التدقيق. أنشئها أولاً قبل أي حقل آخر. اختر أهم 6-10 عناصر مستخرجة وأنشئ ملاحظة لكل منها.',
         items: {
           type: 'object',
           properties: {
             type: { type: 'string', enum: ['pass', 'fail', 'warn'], description: 'pass=مطابق، fail=مخالف، warn=يتطلب مراجعة يدوية' },
             title: { type: 'string', description: 'عنوان الملاحظة' },
-            article: { type: 'string', description: 'المرجع التنظيمي الرسمي من قاعدة المعرفة (مثال: SBC 1101 — القسم 4.2)' },
-            details: { type: 'string', description: 'شرح الملاحظة' },
+            article: { type: 'string', description: 'المرجع التنظيمي من قاعدة المعرفة (مثال: SBC 1101 — القسم 4.2)' },
+            details: { type: 'string', description: 'شرح موجز (جملة إلى جملتين)' },
             observed: { type: 'string', description: 'ما رُصد في المخطط' },
             required: { type: 'string', description: 'ما يتطلبه الكود' },
           },
           required: ['type', 'title', 'article', 'observed', 'required'],
         },
       },
+      planType: { type: 'string', description: 'نوع المخطط' },
+      summary: { type: 'string', description: 'ملخص عربي مهني (3-4 جمل)' },
       recommendations: {
         type: 'array',
         items: { type: 'string' },
-        description: 'توصيات عملية للمصمم أو مقدم الطلب',
+        description: 'توصيات عملية (3-5 توصيات قصيرة)',
       },
-      limitations: { type: 'string', description: 'حدود التحليل: قياسات غير متاحة، جودة صورة، عناصر تتطلب فحصاً ميدانياً' },
+      limitations: { type: 'string', description: 'حدود التحليل بإيجاز' },
     },
-    required: ['planType', 'summary', 'findings', 'limitations'],
+    required: ['findings', 'planType', 'summary', 'limitations'],
   },
 };
 
@@ -111,17 +112,16 @@ ${KB_COMPACT}
 === العناصر المستخرجة من المخطط (حقائق مؤكدة من طبقة الرؤية) ===
 ${JSON.stringify(extraction, null, 2)}
 
-مهمتك: عبر أداة submit_compliance_report، أنشئ ملاحظة تدقيق لكل عنصر مستخرج قابل للتقييم. القائمة أعلاه حقائق مثبتة — لا تشكك فيها ولا تطلب التحقق منها.
+مهمتك عبر أداة submit_compliance_report:
 
-قواعد إلزامية:
-1. لكل فراغ في spaces: ملاحظة تقارن وجوده ومتطلباته مع قاعدة المعرفة (الفراغات الإلزامية، الإضاءة والتهوية الطبيعية، المساحات الدنيا إن وُجد بُعد مكتوب).
-2. للتصنيف الإشغالي وعدد الطوابق والوحدات: ملاحظة مطابقة مع متطلبات التصنيف.
-3. للمخارج والسلالم والجدران المشتركة: ملاحظة لكل عنصر وفق متطلبات الحريق والإخلاء.
-4. لكل قياس مكتوب في written_measurements: ملاحظة تقارنه بالحد النظامي من قاعدة المعرفة.
-5. كل ملاحظة تستشهد بمرجع محدد من قاعدة المعرفة في حقل article. إذا لم تجد مرجعاً مباشراً: type=warn و article="يتطلب مراجعة يدوية — خارج نطاق قاعدة المعرفة الحالية".
-6. ممنوع اختراع أرقام. القياس غير المكتوب يُذكر غيابه في observed ويُصنف warn.
-7. مزيج واقعي من pass/fail/warn حسب ما يستحقه كل عنصر — لا تجامل ولا تتشدد.
-8. اللغة: عربية فصحى مهنية.`;
+أولاً وقبل كل شيء: ابنِ المصفوفة findings — اختر أهم 6 إلى 10 عناصر من القائمة المستخرجة أعلاه (الفراغات، التصنيف، الطوابق، المخارج، السلالم، الجدران المشتركة، القياسات المكتوبة) وأنشئ ملاحظة تدقيق لكل عنصر. القائمة حقائق مثبتة — التقييم الكيفي عليها ممكن ومطلوب حتى بدون قياسات دقيقة.
+
+قواعد:
+1. كل ملاحظة تستشهد بمرجع من قاعدة المعرفة في article. لا مرجع مباشر؟ type=warn و article="يتطلب مراجعة يدوية".
+2. ممنوع اختراع أرقام. القياس غير المكتوب: type=warn مع ذكر غيابه في observed.
+3. مزيج واقعي pass/fail/warn حسب ما يستحقه كل عنصر.
+4. التقرير الذي تكون فيه findings فارغة مرفوض تلقائياً وسيُعاد إليك.
+5. اللغة: عربية فصحى مهنية، موجزة.`;
 }
 export async function POST(request: Request) {
   try {
@@ -136,9 +136,10 @@ export async function POST(request: Request) {
         ? { type: 'document' as const, source: { type: 'base64' as const, media_type: 'application/pdf' as const, data: image } }
         : { type: 'image' as const, source: { type: 'base64' as const, media_type: mediaType, data: image } };
 
+    // ---------- المرحلة 1: الاستخراج ----------
     const extractionResponse = await anthropic.messages.create({
       model: MODEL,
-      max_tokens: 3500,
+      max_tokens: 1500,
       system: EXTRACTION_PROMPT,
       tools: [EXTRACTION_TOOL],
       tool_choice: { type: 'tool', name: 'extract_plan_elements' },
@@ -159,27 +160,66 @@ export async function POST(request: Request) {
     }
     const extraction = (extractionBlock as any).input;
 
-    const complianceResponse = await anthropic.messages.create({
-      model: MODEL,
-      max_tokens: 2048,
-      system: buildCompliancePrompt(extraction),
-      tools: [COMPLIANCE_TOOL],
-      tool_choice: { type: 'tool', name: 'submit_compliance_report' },
-      messages: [
+    // ---------- المرحلة 2: التدقيق مع الرفض والإعادة ----------
+    const systemPrompt = buildCompliancePrompt(extraction);
+    let messages: any[] = [
+      {
+        role: 'user',
+        content: 'أنشئ تقرير الامتثال الآن. ابدأ بالمصفوفة findings: ملاحظة لكل عنصر من أهم 6-10 عناصر مستخرجة.',
+      },
+    ];
+
+    let report: any = null;
+
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const resp = await anthropic.messages.create({
+        model: MODEL,
+        max_tokens: 3500,
+        system: systemPrompt,
+        tools: [COMPLIANCE_TOOL],
+        tool_choice: { type: 'tool', name: 'submit_compliance_report' },
+        messages,
+      });
+
+      const block = resp.content.find((b: any) => b.type === 'tool_use');
+      const candidate = block ? (block as any).input : null;
+
+      if (candidate && Array.isArray(candidate.findings) && candidate.findings.length > 0) {
+        report = candidate;
+        break;
+      }
+
+      console.error(
+        `compliance attempt ${attempt} rejected — stop_reason: ${resp.stop_reason}, findings: ${candidate ? JSON.stringify(candidate.findings) : 'no tool_use'}`
+      );
+
+      if (!block) break;
+
+      // رفض رسمي عبر tool_result — الموديل ملزم بإعادة المحاولة
+      messages = [
+        ...messages,
+        { role: 'assistant', content: resp.content },
         {
           role: 'user',
-          content: 'أنشئ تقرير الامتثال الكامل الآن. ملاحظة لكل عنصر مستخرج قابل للتقييم.',
+          content: [
+            {
+              type: 'tool_result',
+              tool_use_id: (block as any).id,
+              is_error: true,
+              content:
+                'مرفوض: المصفوفة findings فارغة. أعد إرسال التقرير كاملاً عبر الأداة، وابدأ ببناء findings: ملاحظة واحدة لكل عنصر من العناصر المستخرجة (الفراغات، التصنيف، الطوابق، المخارج، السلالم، الجدران المشتركة) — بين 6 و10 ملاحظات إلزامياً.',
+            },
+          ],
         },
-      ],
-    });
-
-    const reportBlock = complianceResponse.content.find((b: any) => b.type === 'tool_use');
-    if (!reportBlock) {
-      return NextResponse.json({ error: 'تعذّر توليد تقرير الامتثال. حاول مرة أخرى.' }, { status: 422 });
+      ];
     }
-    const report = (reportBlock as any).input;
 
-    const findings = Array.isArray(report.findings) ? report.findings : [];
+    if (!report) {
+      return NextResponse.json({ error: 'تعذّر توليد ملاحظات التدقيق. حاول مرة أخرى.' }, { status: 422 });
+    }
+
+    // ---------- الإحصائيات تُحسب في الخادم ----------
+    const findings = report.findings;
     const passCount = findings.filter((f: any) => f.type === 'pass').length;
     const failCount = findings.filter((f: any) => f.type === 'fail').length;
     const warnCount = findings.filter((f: any) => f.type === 'warn').length;
