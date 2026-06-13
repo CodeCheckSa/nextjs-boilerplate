@@ -1,3 +1,4 @@
+// app/page.tsx
 // @ts-nocheck
 /* eslint-disable */
 "use client";
@@ -8,6 +9,7 @@ import {
   BookOpen, Layers, Loader2, FileCheck2, ChevronLeft, Hash, Clock,
   Printer, Send, Building2, Target, TrendingUp, Shield, Zap, Sparkles, Info
 } from 'lucide-react';
+import { upload } from '@vercel/blob/client';
 
 export default function CodeCheckSA() {
   const [activeTab, setActiveTab] = useState('upload');
@@ -70,43 +72,39 @@ export default function CodeCheckSA() {
   const handleFileSelect = async (e) => {
     const file = e.target.files && e.target.files[0];
     if (!file) return;
-    if (file.size > 5 * 1024 * 1024) {
-      setErrorMsg('حجم الملف يتجاوز 5 ميغابايت. يُرجى استخدام ملف أصغر.');
+    if (file.size > 15 * 1024 * 1024) {
+      setErrorMsg('حجم الملف يتجاوز 15 ميغابايت. يُرجى استخدام ملف أصغر.');
       return;
     }
     setUploadedFileName(file.name);
     setUploadState('uploading');
     setErrorMsg('');
     setAnalysisData(null);
-    const reader = new FileReader();
-    reader.onload = async () => {
-      try {
-        const result = reader.result;
-        const base64 = result.split(',')[1];
-        setUploadState('analyzing');
-        const res = await fetch('/api/analyze-plan', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ image: base64, mediaType: file.type }),
-        });
-        const data = await res.json();
-        if (!res.ok) {
-          setErrorMsg(data.error || 'فشل التحليل');
-          setUploadState('error');
-          return;
-        }
-        setAnalysisData(data);
-        setUploadState('done');
-      } catch (err) {
-        setErrorMsg('فشل الاتصال بالخادم');
+    try {
+      // رفع مباشر إلى Vercel Blob (يتجاوز حد 4.5MB)
+      const blob = await upload(file.name, file, {
+        access: 'public',
+        handleUploadUrl: '/api/upload',
+      });
+      // إرسال الرابط فقط إلى محرك التحليل
+      setUploadState('analyzing');
+      const res = await fetch('/api/analyze-plan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: blob.url }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setErrorMsg(data.error || 'فشل التحليل');
         setUploadState('error');
+        return;
       }
-    };
-    reader.onerror = () => {
-      setErrorMsg('فشل قراءة الملف');
+      setAnalysisData(data);
+      setUploadState('done');
+    } catch (err) {
+      setErrorMsg('فشل الاتصال بالخادم');
       setUploadState('error');
-    };
-    reader.readAsDataURL(file);
+    }
   };
 
   const resetUpload = () => {
@@ -116,7 +114,6 @@ export default function CodeCheckSA() {
     setUploadedFileName('');
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
-
   const handlePrint = () => {
     if (!analysisData) return;
     const fileName = uploadedFileName || 'تحليل';
@@ -137,7 +134,7 @@ export default function CodeCheckSA() {
     setTimeout(() => { try { w.print(); } catch (e) {} }, 600);
   };
 
-    const sbcCodes = [
+  const sbcCodes = [
     { code: 'MOMAH 2024', title: 'اشتراطات المباني السكنية', icon: Target },
     { code: 'SBC-1101', title: 'المباني السكنية', icon: Building2 },
     { code: 'SBC-1102', title: 'الصحي والميكانيكي والكهربائي', icon: FileText },
@@ -236,7 +233,6 @@ export default function CodeCheckSA() {
           </div>
         </div>
       </section>
-
       <section className="border-t border-[var(--line)] bg-[#EBE5D6]">
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-16 md:py-20">
           <div className="flex items-center gap-3 text-[10px] md:text-xs tracking-widest text-[#3F5235] mb-6">
@@ -335,7 +331,7 @@ export default function CodeCheckSA() {
                     />
                     <Upload className="w-8 h-8 md:w-10 md:h-10 mx-auto text-[var(--ink)]/40 mb-3 md:mb-4" />
                     <div className="display text-base md:text-xl mb-2 px-4">رفع المخطط الهندسي</div>
-                    <div className="text-xs md:text-sm text-[var(--ink)]/60 mb-5 md:mb-6 px-4">صيغ مدعومة: JPG, PNG, PDF — حد أقصى 5MB</div>
+                    <div className="text-xs md:text-sm text-[var(--ink)]/60 mb-5 md:mb-6 px-4">صيغ مدعومة: JPG, PNG, PDF — حد أقصى 15MB</div>
                     <button
                       onClick={() => fileInputRef.current && fileInputRef.current.click()}
                       className="bg-[var(--ink)] text-[var(--paper)] px-5 md:px-6 py-2.5 md:py-3 text-xs md:text-sm tracking-wider hover:bg-[#3F5235] transition"
@@ -355,7 +351,6 @@ export default function CodeCheckSA() {
                     <div className="text-sm">جاري رفع الملف: {uploadedFileName}</div>
                   </div>
                 )}
-
                 {uploadState === 'analyzing' && (
                   <div className="py-8 md:py-12">
                     <div className="relative mx-auto w-48 h-48 md:w-64 md:h-64 border border-[var(--line)] bg-[#F9F6EF] overflow-hidden mb-6">
@@ -589,7 +584,6 @@ export default function CodeCheckSA() {
           )}
         </div>
       </section>
-
       <section id="integration" className="border-t border-[var(--line)] bg-[#EBE5D6]">
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-16 md:py-24">
           <div className="grid md:grid-cols-2 gap-10 md:gap-16">
