@@ -2,7 +2,10 @@
 import { NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import sbcKnowledge from '@/data/sbc-knowledge.json';
+import { prepareFileForClaude } from '@/lib/prepare-file';
+import { del } from '@vercel/blob';
 
+export const runtime = 'nodejs';
 export const maxDuration = 60;
 
 const anthropic = new Anthropic({
@@ -66,6 +69,7 @@ const EXTRACTION_PROMPT = `أنت محلل رؤية حاسوبية متخصص ف
 2. انقل القياسات المكتوبة حرفياً. لا تخمّن أي قياس غير مكتوب.
 3. لا تقيّم ولا تحكم على الامتثال — الاستخراج فقط.
 4. اكتب الأسماء بالعربية كما تظهر في المخطط.`;
+
 const COMPLIANCE_TOOL = {
   name: 'submit_compliance_report',
   description: 'إرسال تقرير الامتثال النهائي. المصفوفة findings إلزامية ويجب أن تحوي 6 إلى 10 ملاحظات — التقرير بدونها مرفوض.',
@@ -123,18 +127,18 @@ ${JSON.stringify(extraction, null, 2)}
 4. التقرير الذي تكون فيه findings فارغة مرفوض تلقائياً وسيُعاد إليك.
 5. اللغة: عربية فصحى مهنية، موجزة.`;
 }
+
 export async function POST(request: Request) {
+  let blobUrl: string | null = null;
   try {
-    const { image, mediaType } = await request.json();
+    const { url } = await request.json();
 
-    if (!image || !mediaType) {
-      return NextResponse.json({ error: 'الملف أو نوعه مفقود' }, { status: 400 });
+    if (!url) {
+      return NextResponse.json({ error: 'رابط الملف مفقود' }, { status: 400 });
     }
+    blobUrl = url;
 
-    const fileBlock =
-      mediaType === 'application/pdf'
-        ? { type: 'document' as const, source: { type: 'base64' as const, media_type: 'application/pdf' as const, data: image } }
-        : { type: 'image' as const, source: { type: 'base64' as const, media_type: mediaType, data: image } };
+    const fileBlock = await prepareFileForClaude(url);
 
     // ---------- المرحلة 1: الاستخراج ----------
     const extractionResponse = await anthropic.messages.create({
@@ -169,7 +173,7 @@ export async function POST(request: Request) {
       },
     ];
 
-        let report: any = null;
+    let report: any = null;
 
     for (let attempt = 0; attempt < 1; attempt++) {
       const resp = await anthropic.messages.create({
@@ -249,5 +253,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'تعذّرت قراءة الصورة. تأكد من الصيغة (JPG/PNG/PDF) والحجم.' }, { status: 400 });
     }
     return NextResponse.json({ error: 'حدث خطأ أثناء التحليل. حاول مرة أخرى.' }, { status: 500 });
+  } finally {
+    if (blobUrl) await del(blobUrl).catch(() => {});
   }
 }
