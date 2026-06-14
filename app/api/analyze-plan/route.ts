@@ -143,7 +143,7 @@ export async function POST(request: Request) {
     // ---------- المرحلة 1: الاستخراج ----------
     const extractionResponse = await anthropic.messages.create({
       model: MODEL,
-      max_tokens: 1500,
+      max_tokens: 4000,
       system: EXTRACTION_PROMPT,
       tools: [EXTRACTION_TOOL],
       tool_choice: { type: 'tool', name: 'extract_plan_elements' },
